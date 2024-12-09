@@ -110,7 +110,7 @@ func main() {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
 	defer client.Disconnect(context.TODO())
-
+	fmt.Println("collection:", mongoColl)
 	messagesColl = client.Database(mongoDBName).Collection(mongoColl)
 	fmt.Println("Connected to MongoDB")
 
