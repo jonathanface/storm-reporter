@@ -28,12 +28,12 @@ func main() {
 	}
 	defer dao.Disconnect()
 
-	// Set up routes with middleware
+	// routes with middleware
 	mux := http.NewServeMux()
 	middlewareContext := middleware.WithDAOContext(dao)
 	mux.Handle("/messages", middlewareContext(routes.GetMessagesHandler))
 
-	// Start the server
+	// Start
 	port := os.Getenv("API_PORT")
 	if port == "" {
 		port = "8080"
