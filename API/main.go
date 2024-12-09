@@ -75,7 +75,7 @@ func consumeFromKafka() {
 
 		//attempting to prevent duplicate storms
 		fmt.Println("write message:", message)
-		filter := bson.M{"time": message["time"].(int32), "type": message["type"], "location": message["location"], "lat": message["lat"].(float64), "lon": message["lon"].(float64)}
+		filter := bson.M{"time": message["time"].(float64), "type": message["type"], "location": message["location"], "lat": message["lat"].(float64), "lon": message["lon"].(float64)}
 		log.Printf("Filter: %+v", filter)
 		results, err := messagesColl.UpdateOne(
 			context.TODO(),
