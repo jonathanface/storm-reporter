@@ -22,6 +22,7 @@
   "scripts": {
     "test": "jest",
     "lint": "eslint . --fix",
-    "forcePublish": "ts-node dist/index.js runProducer"
+    "forcePublish": "ts-node dist/index.js runProducer",
+    "generateStorms": "ts-node dist/index.js generateStorms"
   }
 }

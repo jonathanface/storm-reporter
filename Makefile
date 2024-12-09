@@ -32,9 +32,16 @@ compose-replace: compose-down compose-build compose-up
 .PHONY: force-publish
 force-publish: docker exec -it producer-service npm run forcePublish
 
+.PHONY: generate-storms
+force-publish: docker exec -it producer-service npm run generateStorms
+
 .PHONY: drop-db
 drop-db:
 	docker volume rm weather_mongo_data
+
+.PHONY: connect-db
+connect-db: docker exec -it mongo mongosh
+
 
 # View logs of a specific service
 .PHONY: logs
