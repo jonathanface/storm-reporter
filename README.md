@@ -80,8 +80,11 @@ A React-based web application that displays storm data on a Google Map with filt
 
 ### Producer
  - **Fetch Storm Data**: The producer fetches storm data from an external source (e.g., NOAA) and publishes it to Kafka. Trigger manually with:
-    ```bash
-    make force-publish
+        ```bash
+        make force-publish
+ - **Generate Dummy Data**: You may generate fake storms for today with:
+        ```bash
+        make generate-storms
 
  ### MongoDB
  Access MongoDB data directly using:
