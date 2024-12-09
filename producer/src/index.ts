@@ -30,7 +30,8 @@ export async function fetchStormReports(url: string, date?: string): Promise<Sto
     response?.data
       .pipe(csv())
       .on('data', (row: StormReport) => {
-        const timestamp = date ? new Date(date).getTime().toString() : new Date().getTime().toString();
+        const timestamp = date ? date : new Date().getTime().toString();
+        console.log(date, "setting to", timestamp)
         row.date = timestamp;
         reports.push(row);
       })
@@ -79,9 +80,13 @@ const formatTimestampToYYMMDD = (unixTimestamp: string): string => {
 export async function runProducer(dateString?: string) {
   console.log('runProducer function has been invoked.');
   const topic = 'raw-weather-reports';
-  const tornadoURL = dateString ? baseURL + formatTimestampToYYMMDD(dateString) + "_rpts.csv" : baseURL + "today_torn.csv";
-  const hailURL = dateString ? baseURL + formatTimestampToYYMMDD(dateString) + "_rpts.csv" : baseURL + "today_hail.csv";
-  const windURL = dateString ? baseURL + formatTimestampToYYMMDD(dateString) + "_rpts.csv" : baseURL + "today_wind.csv";
+  dateString = "1716764227"
+  const tornadoURL = dateString ? baseURL + formatTimestampToYYMMDD(dateString) + "_rpts_torn.csv" : baseURL + "today_torn.csv";
+  const hailURL = dateString ? baseURL + formatTimestampToYYMMDD(dateString) + "_rpts_hail.csv" : baseURL + "today_hail.csv";
+  const windURL = dateString ? baseURL + formatTimestampToYYMMDD(dateString) + "_rpts_wind.csv" : baseURL + "today_wind.csv";
+  // const tornadoURL = baseURL + "240526_rpts_torn.csv";
+  // const hailURL = baseURL + "240526_rpts_hail.csv";
+  // const windURL = baseURL + "240526_rpts_wind.csv";
   try {
     console.log('Fetching storm reports...');
     const [tornados, hail, wind] = await Promise.all([
@@ -105,6 +110,8 @@ export async function runProducer(dateString?: string) {
 console.log('Producer service has started.');
 runProducer();
 setInterval(runProducer, 24 * 60 * 60 * 1000);
+
+
 
 if (require.main === module) {
   const arg = process.argv[2];

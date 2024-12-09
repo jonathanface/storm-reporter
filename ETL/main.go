@@ -114,7 +114,7 @@ const (
 )
 
 type StormReport struct {
-	Date     time.Time `json:"date"`
+	Date     string    `json:"date"`
 	Time     int32     `json:"time"`
 	Size     int32     `json:"size"`
 	F_Scale  string    `json:"fScale"`
@@ -131,6 +131,7 @@ type StormReport struct {
 func (sr *StormReport) UnmarshalJSON(data []byte) error {
 	// Define a temporary struct matching the incoming JSON keys
 	type tempStormReport struct {
+		Date     string `json:"date"`
 		Time     string `json:"Time"`
 		Size     string `json:"Size"`
 		F_Scale  string `json:"F_Scale"`
@@ -164,6 +165,7 @@ func (sr *StormReport) UnmarshalJSON(data []byte) error {
 	if val, err := strconv.ParseFloat(temp.Lon, 64); err == nil {
 		sr.Lon = float64(val)
 	}
+	sr.Date = temp.Date
 	sr.F_Scale = temp.F_Scale
 	sr.Location = temp.Location
 	sr.County = temp.County
