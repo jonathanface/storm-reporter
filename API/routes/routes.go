@@ -35,8 +35,10 @@ func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
 
 	startOfDay := unixTimestamp
 	endOfDay := unixTimestamp + 86400 - 1
+	startStr := strconv.FormatInt(startOfDay, 10)
+	endStr := strconv.FormatInt(endOfDay, 10)
 
-	reports, err := dao.GetStormReports(startOfDay, endOfDay)
+	reports, err := dao.GetStormReports(startStr, endStr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to retrieve storm reports: %v", err), http.StatusInternalServerError)
 		return

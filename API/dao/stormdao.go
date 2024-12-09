@@ -29,7 +29,8 @@ func (dao *StormDAO) Disconnect() error {
 	return dao.client.Disconnect(context.TODO())
 }
 
-func (dao *StormDAO) GetStormReports(startOfDay, endOfDay int64) ([]models.StormReport, error) {
+func (dao *StormDAO) GetStormReports(startOfDay, endOfDay string) ([]models.StormReport, error) {
+
 	filter := bson.M{
 		"date": bson.M{
 			"$gte": startOfDay,
