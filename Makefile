@@ -30,10 +30,12 @@ compose-restart: compose-down compose-up
 compose-replace: compose-down compose-build compose-up
 
 .PHONY: force-publish
-force-publish: docker exec -it producer-service npm run forcePublish
+force-publish:
+	docker exec -it producer-service npm run forcePublish
 
 .PHONY: generate-storms
-force-publish: docker exec -it producer-service npm run generateStorms
+generate-storms:
+	docker exec -it producer-service npm run generateStorms
 
 .PHONY: drop-db
 drop-db:
