@@ -78,16 +78,21 @@ func consumeFromKafka() {
 		//attempting to prevent duplicate storms
 		fmt.Println("write message:", message)
 		filter := bson.M{"time": message["time"], "type": message["type"], "location": message["location"], "lat": message["lat"], "lon": message["lon"]}
-		_, err := messagesColl.UpdateOne(
+		results, err := messagesColl.UpdateOne(
 			context.TODO(),
 			filter,
 			bson.M{"$set": message},
 			options.Update().SetUpsert(true),
 		)
-		//_, err := messagesColl.InsertOne(context.TODO(), message)
 		if err != nil {
 			log.Printf("Error inserting message into MongoDB: %v", err)
 		} else {
+			if results.UpsertedCount > 0 {
+				fmt.Printf("Message written to MongoDB: %v\n", message)
+			} else {
+				fmt.Printf("Message already exists in MongoDB: %v\n", message)
+			}
+
 			fmt.Printf("Message written to MongoDB: %v\n", message)
 		}
 	}
