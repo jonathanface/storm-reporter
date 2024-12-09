@@ -102,7 +102,16 @@ func consumeFromKafka() {
 		message["kafkaPartition"] = msg.Partition
 		message["kafkaOffset"] = msg.Offset
 
-		_, err := messagesColl.InsertOne(context.TODO(), message)
+		//attempting to prevent duplicate storms
+		fmt.Println("write message:", message)
+		filter := bson.M{"time": message["time"], "type": message["type"], "location": message["location"], "lat": message["lat"], "lon": message["lon"]}
+		_, err := messagesColl.UpdateOne(
+			context.TODO(),
+			filter,
+			bson.M{"$set": message},
+			options.Update().SetUpsert(true),
+		)
+		//_, err := messagesColl.InsertOne(context.TODO(), message)
 		if err != nil {
 			log.Printf("Error inserting message into MongoDB: %v", err)
 		} else {
@@ -120,6 +129,7 @@ const (
 )
 
 type StormReport struct {
+	Date     string    `json:"date" bson:"date"`
 	Time     int32     `json:"time" bson:"time"`
 	Size     int32     `json:"size" bson:"size"`
 	F_Scale  string    `json:"fScale" bson:"fScale"`
@@ -135,15 +145,12 @@ type StormReport struct {
 
 func getAllStormReports() ([]StormReport, error) {
 	var reports []StormReport
-
-	// Find all documents in the collection
 	cursor, err := messagesColl.Find(context.TODO(), bson.M{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve storm reports: %w", err)
 	}
 	defer cursor.Close(context.TODO())
 
-	// Decode each document into a StormReport struct
 	if err := cursor.All(context.TODO(), &reports); err != nil {
 		return nil, fmt.Errorf("failed to decode storm reports: %w", err)
 	}
