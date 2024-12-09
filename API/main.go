@@ -65,8 +65,6 @@ func consumeFromKafka() {
 	fmt.Println("Consuming messages from Kafka...")
 	for msg := range partitionConsumer.Messages() {
 		fmt.Printf("Received message: %s\n", string(msg.Value))
-
-		// Store message in MongoDB
 		var message bson.M
 		if err := json.Unmarshal(msg.Value, &message); err != nil {
 			log.Printf("Error unmarshaling message: %v", err)
@@ -77,7 +75,8 @@ func consumeFromKafka() {
 
 		//attempting to prevent duplicate storms
 		fmt.Println("write message:", message)
-		filter := bson.M{"time": message["time"], "type": message["type"], "location": message["location"], "lat": message["lat"], "lon": message["lon"]}
+		filter := bson.M{"time": message["time"].(int32), "type": message["type"], "location": message["location"], "lat": message["lat"].(float64), "lon": message["lon"].(float64)}
+		log.Printf("Filter: %+v", filter)
 		results, err := messagesColl.UpdateOne(
 			context.TODO(),
 			filter,
