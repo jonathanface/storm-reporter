@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storm Data Visualization</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYU9l7ULu43Chg5wM0bZ-_GPuMvaB2db8"></script>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Storm Data Visualization</h1>
+    <div id="map"></div>
+    <script>
+        async function initMap() {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 39.8283, lng: -98.5795 }, // Center on the US
+                zoom: 4,
+            });
+
+            // Fetch storm data from the API
+            const response = await fetch("/api/messages");
+            const data = await response.json();
+
+            // Place markers for each storm
+            data.forEach((storm) => {
+                const latitude = parseFloat(storm.latitude);
+                const longitude = parseFloat(storm.longitude);
+                const size = parseInt(storm.size, 10) || 10; // Default size if missing
+
+                if (!isNaN(latitude) && !isNaN(longitude)) {
+                    const marker = new google.maps.Marker({
+                        position: { lat: latitude, lng: longitude },
+                        map: map,
+                    });
+
+                    // Add info window
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `
+              <div>
+                <strong>Location:</strong> ${storm.location}<br>
+                <strong>Type:</strong> ${storm.type}<br>
+                <strong>Size:</strong> ${storm.size || "N/A"}<br>
+                <strong>Time:</strong> ${storm.Time || "N/A"}
+              </div>
+            `,
+                    });
+
+                    marker.addListener("click", () => {
+                        infoWindow.open(map, marker);
+                    });
+                }
+            });
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+
+</html>
