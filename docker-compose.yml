@@ -1,0 +1,94 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.1
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.1
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_MESSAGE_MAX_BYTES: 209715200 # 200 MB
+      KAFKA_MAX_REQUEST_SIZE: 209715200 # 200 MB
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 209715200 # 200 MB
+      KAFKA_FETCH_MAX_BYTES: 209715200 # 200 MB
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  producer-service:
+    build:
+      context: ./producer
+    container_name: producer-service
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+
+  etl-service:
+    build:
+      context: ./ETL
+    container_name: etl-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      RAW_TOPIC: raw-weather-reports
+      PROCESSED_TOPIC: processed-weather-reports
+
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  api-service:
+    build:
+      context: ./API
+    container_name: api-service
+    depends_on:
+      - kafka
+      - mongo
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      PROCESSED_TOPIC: processed-weather-reports
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: kafka_messages
+      MONGO_COLL: messages
+      API_PORT: 8080
+    ports:
+      - "8080:8080"
+
+  frontend-service:
+    build:
+      context: ./frontend
+    container_name: frontend-service
+    depends_on:
+      - api-service
+    ports:
+      - "8081:80" # Expose frontend on localhost:8081
+
+networks:
+  default:
+    driver: bridge
+volumes:
+  mongo_data:
