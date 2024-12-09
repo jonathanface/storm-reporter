@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/jonathanface/storm-reporter/dao"
-	"github.com/jonathanface/storm-reporter/middleware"
-	"github.com/jonathanface/storm-reporter/routes"
+	"github.com/jonathanface/storm-reporter/API/dao"
+	"github.com/jonathanface/storm-reporter/API/middleware"
+	"github.com/jonathanface/storm-reporter/API/routes"
 )
 
 func main() {

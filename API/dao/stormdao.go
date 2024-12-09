@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jonathanface/storm-reporter/models"
+	"github.com/jonathanface/storm-reporter/API/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

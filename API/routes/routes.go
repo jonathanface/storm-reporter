@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jonathanface/storm-reporter/middleware"
+	"github.com/jonathanface/storm-reporter/API/middleware"
 )
 
 func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +31,7 @@ func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	fmt.Println("time", unixTimestamp)
 
 	startOfDay := unixTimestamp
 	endOfDay := unixTimestamp + 86400 - 1

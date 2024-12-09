@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/jonathanface/storm-reporter/dao"
+	"github.com/jonathanface/storm-reporter/API/dao"
 )
 
 type contextKey string
