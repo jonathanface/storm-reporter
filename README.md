@@ -75,8 +75,8 @@ A React-based web application that displays storm data on a Google Map with filt
 ## Usage
 ### Commands
 Numerous makefile commands are available to manage the services.
-```bash
-sudo make help
+    ````bash
+    sudo make help
 
 ### Frontend
 
