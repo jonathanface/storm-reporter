@@ -23,7 +23,6 @@ describe('fetchStormReports', () => {
 
     try {
       const reports = await fetchStormReports('https://mock-noaa-reports.com');
-      console.log("reps", reports)
       expect(reports).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ location: 'Denver', type: 'Tornado' }),
