@@ -21,7 +21,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.22 # Replace with your Go version
+          go-version: 1.22
 
       # Change to the ETL directory
       - name: Change directory to ETL
@@ -37,11 +37,7 @@ jobs:
       # Run tests in ETL directory
       - name: Run tests
         working-directory: ./ETL
-        run: go test -v ./...
-
-      - name: Run tests with coverage
-        working-directory: ./ETL
-        run: go test -coverprofile=coverage.out ./...
+        run: go test -coverprofile=coverage.out -json > test-report.json ./...
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
