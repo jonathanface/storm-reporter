@@ -35,7 +35,7 @@ func TestTransformData_ValidData(t *testing.T) {
 
 	assert.Equal(t, "1733773195", result.Date)
 	assert.Equal(t, int32(1200), result.Time)
-	assert.Equal(t, int32(3), result.Size)
+	assert.Equal(t, float64(3), result.Size)
 	assert.Equal(t, "hail", string(result.Type))
 	assert.Equal(t, "Boston", result.Location)
 	assert.Equal(t, "it's really bad", result.Comments)
@@ -110,7 +110,7 @@ func TestETLHandler_ConsumeClaim(t *testing.T) {
 		MessagesChannel: make(chan *sarama.ConsumerMessage, 1),
 	}
 
-	rawJSON := `{"date":"2023-12-09","time":"1200","type":"tornado","location":"Test City","fScale":"3","size":"0","speed":"0","Lat":"43.227946016550874","Lon":"-78.49762842469941"}`
+	rawJSON := `{"date":"2023-12-09","time":"1200","type":"tornado","location":"Test City","fScale":"F5","size":"0.2","speed":"5","Lat":"43.227946016550874","Lon":"-78.49762842469941"}`
 
 	// Add a test message
 	mockClaim.MessagesChannel <- &sarama.ConsumerMessage{
@@ -126,7 +126,7 @@ func TestETLHandler_ConsumeClaim(t *testing.T) {
 	}
 
 	// Verify producer sent message
-	expected := `{"comments":"","state":"","county":"","date":"2023-12-09","time":1200,"type":"tornado","location":"Test City","fScale":"","size":0,"speed":0,"lat":43.227946016550874,"lon":-78.49762842469941}`
+	expected := `{"comments":"","state":"","county":"","date":"2023-12-09","time":1200,"type":"tornado","location":"Test City","fScale":"F5","size":0.2,"speed":5,"lat":43.227946016550874,"lon":-78.49762842469941}`
 	mockProducer.ExpectSendMessageWithCheckerFunctionAndSucceed(func(val []byte) error {
 		assert.JSONEq(t, expected, string(val))
 		return nil
