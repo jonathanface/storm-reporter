@@ -1,4 +1,4 @@
-name: Go Unit Tests for ETL
+name: Go Unit Tests for API & ETL
 
 on:
   push:
