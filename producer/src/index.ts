@@ -71,7 +71,7 @@ process.on('SIGTERM', async () => {
 const retryWithBackoff = async (
   fn: () => Promise<void>,
   retries = 5,
-  delay = 1000
+  delay = 1000,
 ) => {
   try {
     await fn();
@@ -133,7 +133,7 @@ const publishToKafka = async (data: StormReport[], topic: string) => {
 // Fetch storm reports
 export const fetchStormReports = async (
   url: string,
-  date?: string
+  date?: string,
 ): Promise<StormReport[]> => {
   const response = await axios.get<Readable>(url, { responseType: 'stream' });
 
