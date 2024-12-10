@@ -24,11 +24,9 @@ var (
 	mongoURI     = os.Getenv("MONGO_URI")
 	mongoDBName  = os.Getenv("MONGO_DB")
 	mongoColl    = os.Getenv("MONGO_COLL")
-	client       *mongo.Client
-	messagesColl *mongo.Collection
 )
 
-func consumeFromKafka() {
+func consumeFromKafka(messagesColl *mongo.Collection) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Recovered from panic in consumeFromKafka: %v", r)
@@ -57,7 +55,7 @@ func consumeFromKafka() {
 	if err != nil {
 		log.Printf("Error creating partition consumer: %v. Retrying in 5 seconds...", err)
 		time.Sleep(5 * time.Second)
-		go consumeFromKafka() // Retry by restarting the consumer
+		go consumeFromKafka(messagesColl) // Retry by restarting the consumer
 		return
 	}
 	defer partitionConsumer.Close()
@@ -73,10 +71,16 @@ func consumeFromKafka() {
 		message["kafkaPartition"] = msg.Partition
 		message["kafkaOffset"] = msg.Offset
 
-		//attempting to prevent duplicate storms
-		fmt.Println("write message:", message)
-		filter := bson.M{"time": message["time"].(float64), "type": message["type"], "location": message["location"], "lat": message["lat"].(float64), "lon": message["lon"].(float64)}
-		log.Printf("Filter: %+v", filter)
+		// Create filter for upsert
+		filter := bson.M{
+			"time":     message["time"],
+			"type":     message["type"],
+			"location": message["location"],
+			"lat":      message["lat"],
+			"lon":      message["lon"],
+		}
+
+		// Perform upsert operation
 		results, err := messagesColl.UpdateOne(
 			context.TODO(),
 			filter,
@@ -84,15 +88,14 @@ func consumeFromKafka() {
 			options.Update().SetUpsert(true),
 		)
 		if err != nil {
-			log.Printf("Error inserting message into MongoDB: %v", err)
-		} else {
-			if results.UpsertedCount > 0 {
-				fmt.Printf("Message written to MongoDB: %v\n", message)
-			} else {
-				fmt.Printf("Message already exists in MongoDB: %v\n", message)
-			}
+			log.Printf("Error inserting/updating message into MongoDB: %v", err)
+			continue
+		}
 
+		if results.UpsertedCount > 0 {
 			fmt.Printf("Message written to MongoDB: %v\n", message)
+		} else {
+			fmt.Printf("Message already exists in MongoDB: %v\n", message)
 		}
 	}
 }
@@ -103,32 +106,31 @@ func main() {
 	}
 
 	// Initialize MongoDB
-	var err error
-	client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
 	defer client.Disconnect(context.TODO())
-	fmt.Println("collection:", mongoColl)
-	messagesColl = client.Database(mongoDBName).Collection(mongoColl)
-	fmt.Println("Connected to MongoDB")
+
+	messagesColl := client.Database(mongoDBName).Collection(mongoColl)
+	fmt.Printf("Connected to MongoDB collection: %s\n", mongoColl)
 
 	// Start Kafka consumer in a goroutine
-	go consumeFromKafka()
+	go consumeFromKafka(messagesColl)
 
 	// Initialize DAO
-	dao, err := dao.NewStormDAO(mongoURI, mongoDBName, mongoColl)
+	daoInstance, err := dao.NewStormDAO(mongoURI, mongoDBName, mongoColl)
 	if err != nil {
 		log.Fatalf("Failed to initialize DAO: %v", err)
 	}
-	defer dao.Disconnect()
+	defer daoInstance.Disconnect()
 
-	// routes with middleware
+	// Setup routes with middleware
 	mux := http.NewServeMux()
-	middlewareContext := middleware.WithDAOContext(dao)
+	middlewareContext := middleware.WithDAOContext(daoInstance)
 	mux.Handle("/messages", middlewareContext(routes.GetMessagesHandler))
 
-	// Start
+	// Start HTTP server
 	port := os.Getenv("API_PORT")
 	if port == "" {
 		port = "8080"

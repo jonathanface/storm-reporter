@@ -22,3 +22,8 @@ type StormReport struct {
 	Comments string    `json:"comments" bson:"comments"`
 	Type     StormType `json:"type" bson:"type"`
 }
+
+type StormDAOInterface interface {
+	GetStormReports(start string, end string) ([]StormReport, error)
+	Disconnect() error
+}
