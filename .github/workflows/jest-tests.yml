@@ -40,14 +40,14 @@ jobs:
 
       # Step 5: Upload Jest JUnit report
       - name: Upload Jest JUnit report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jest-junit-report
           path: ./producer/junit.xml
 
       # Step 6: Upload coverage report
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: ./producer/coverage
