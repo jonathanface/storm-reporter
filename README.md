@@ -104,6 +104,9 @@ Fetch storm reports for a given date.
   - `400`: Invalid date parameter.
   - `500`: Internal server error.
 
+## Architecture
+![Architecture Diagram](./architecture.png)
+
 ## License
 
 This project is licensed under the MIT License.
