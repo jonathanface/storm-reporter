@@ -62,11 +62,13 @@ A React-based web application that displays storm data on a Google Map with filt
    ```bash
    git clone https://github.com/yourusername/storm-reporter.git
    cd storm-reporter
+   ```
 
 2. **Build and Run Containers**
    ```bash
    sudo make compose build
    sudo make compose up
+   ```
 
 3. **Access the Application**
    - Frontend: [http://localhost:8081](http://localhost:8081)
@@ -77,6 +79,7 @@ A React-based web application that displays storm data on a Google Map with filt
 Numerous makefile commands are available to manage the services.
    ```bash
    sudo make help
+   ```
 
 ### Frontend
 
@@ -90,15 +93,18 @@ Numerous makefile commands are available to manage the services.
  - **Fetch Storm Data**: The producer fetches storm data from an external source (e.g., NOAA) and publishes it to Kafka. Trigger manually with:
     ```bash
     sudo make force-publish
+    ```
 
  - **Generate Dummy Data**: You may generate fake storms for today with:
     ```bash
     sudo make generate-storms
+    ```
 
  ### MongoDB
  Access MongoDB data directly using:
     ```bash
     sudo make mongo-connect
+    ```
 
 ## Endpoints
 
