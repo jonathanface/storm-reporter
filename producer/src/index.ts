@@ -3,6 +3,7 @@ import csv from 'csv-parser';
 import { Kafka, Producer } from 'kafkajs';
 import { Readable } from 'stream';
 import { StormType } from './types';
+import { exit } from 'process';
 
 interface StormReport {
   [key: string]: string;
@@ -17,76 +18,123 @@ const kafka = new Kafka({
     retries: 10,
   },
 });
+
 const producer: Producer = kafka.producer({
   allowAutoTopicCreation: false,
   maxInFlightRequests: 5,
 });
 
-export const generateStormsToday = () => {
-  const types = [StormType.TORNADO, StormType.HAIL, StormType.WIND];
-  const fScales = ["F0", "F1", "F2", "F3", "F4", "F5"];
-  const locations = [
-    "Dallas, TX",
-    "New York, NY",
-    "Chicago, IL",
-    "Miami, FL",
-    "Seattle, WA",
-    "Denver, CO",
-    "Los Angeles, CA",
-    "Atlanta, GA",
-    "Phoenix, AZ",
-    "Boston, MA",
-  ];
+let producerInitialized = false;
 
-  // Helper to generate random numbers within a range
-  const getRandomInRange = (min: number, max: number): number =>
-    Math.random() * (max - min) + min;
-
-  // Generate between 5 and 10 storm reports
-  const stormCount = Math.floor(getRandomInRange(5, 10));
-  const storms: StormReport[] = [];
-
-  for (let i = 0; i < stormCount; i++) {
-    const type = types[Math.floor(Math.random() * types.length)];
-    const location = locations[Math.floor(Math.random() * locations.length)];
-    const [city, state] = location.split(", ");
-
-    // Mock latitude and longitude roughly within US bounds
-    const lat = getRandomInRange(25, 49.5).toString();
-    const lon = getRandomInRange(-125, -67).toString();
-
-    // Unix timestamp for the current time
-    const timestamp = Math.floor(Date.now() / 1000);
-
-    // Generate StormData with type-specific fields
-    const storm: StormReport = {
-      lat,
-      lon,
-      location: `${city}`,
-      type,
-      time: "1200",
-      date: timestamp.toString(),
-      comments: "it's really bad",
-      county: "some county",
-      state: state
-    };
-
-    // Populate type-specific fields
-    if (type === StormType.TORNADO) {
-      storm.fScale = fScales[Math.floor(Math.random() * fScales.length)];
-    } else if (type === StormType.HAIL) {
-      storm.size = parseFloat(getRandomInRange(0.5, 4).toFixed(1)).toString(); // Size in inches
-    } else if (type === StormType.WIND) {
-      storm.speed = Math.floor(getRandomInRange(30, 100)).toString(); // Speed in mph
+// Initialize producer with a persistent connection
+const initProducer = async () => {
+  if (!producerInitialized) {
+    try {
+      console.log('Initializing Kafka producer...');
+      await producer.connect();
+      producerInitialized = true;
+      console.log('Kafka producer connected.');
+    } catch (error) {
+      console.error('Failed to connect Kafka producer:', error);
+      throw error;
     }
-    storms.push(storm);
   }
-  console.log("Storms generated:", storms);
-  const topic = 'raw-weather-reports';
-  publishToKafka(storms, topic)
-}
+};
 
-export const fetchStormReports = async (url: string, date?: string): Promise<StormReport[]> => {
+// Disconnect producer gracefully
+export const closeProducer = async () => {
+  if (producerInitialized) {
+    try {
+      console.log('Disconnecting Kafka producer...');
+      await producer.disconnect();
+      producerInitialized = false;
+      console.log('Kafka producer disconnected.');
+    } catch (error) {
+      console.error('Failed to disconnect Kafka producer:', error);
+    }
+  }
+};
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received. Cleaning up...');
+  await closeProducer();
+  exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received. Cleaning up...');
+  await closeProducer();
+  exit(0);
+});
+
+// Retry logic with exponential backoff
+const retryWithBackoff = async (
+  fn: () => Promise<void>,
+  retries = 5,
+  delay = 1000
+) => {
+  try {
+    await fn();
+  } catch (error) {
+    if (retries > 0) {
+      console.error(`Retrying after ${delay}ms...`, error);
+      await new Promise((res) => setTimeout(res, delay));
+      return retryWithBackoff(fn, retries - 1, delay * 2);
+    }
+    console.error('Max retries reached. Operation failed.');
+    throw error;
+  }
+};
+
+// Message queue for local buffering
+const messageQueue: StormReport[] = [];
+
+// Add message to queue
+const addToQueue = (message: StormReport) => {
+  messageQueue.push(message);
+};
+
+// Process queued messages
+const processQueue = async (topic: string) => {
+  while (messageQueue.length > 0) {
+    const message = messageQueue.shift();
+    try {
+      await producer.send({
+        topic,
+        messages: [{ value: JSON.stringify(message) }],
+      });
+    } catch (err) {
+      console.error('Failed to send message, re-queuing:', err);
+      messageQueue.unshift(message!); // Re-queue the message
+      break;
+    }
+  }
+};
+
+// Publish data to Kafka with retry and queue processing
+const publishToKafka = async (data: StormReport[], topic: string) => {
+  await retryWithBackoff(async () => {
+    await initProducer();
+    for (const report of data) {
+      const message = JSON.stringify(report);
+      const messageSize = Buffer.byteLength(message, 'utf-8');
+
+      if (messageSize > 209715200) {
+        console.error(`Message size exceeds limit: ${messageSize} bytes`);
+        continue; // Skip oversized messages
+      }
+
+      addToQueue(report);
+    }
+    await processQueue(topic);
+  });
+};
+
+// Fetch storm reports
+export const fetchStormReports = async (
+  url: string,
+  date?: string
+): Promise<StormReport[]> => {
   const response = await axios.get<Readable>(url, { responseType: 'stream' });
 
   return new Promise((resolve, reject) => {
@@ -101,49 +149,86 @@ export const fetchStormReports = async (url: string, date?: string): Promise<Sto
       .on('end', () => resolve(reports))
       .on('error', (err) => reject(err));
   });
-}
+};
 
-const MAX_MESSAGE_BYTES = 209715200; // 200 MB
+// Generate storms for testing
+export const generateStormsToday = () => {
+  const types = [StormType.TORNADO, StormType.HAIL, StormType.WIND];
+  const fScales = ['F0', 'F1', 'F2', 'F3', 'F4', 'F5'];
+  const locations = [
+    'Dallas, TX',
+    'New York, NY',
+    'Chicago, IL',
+    'Miami, FL',
+    'Seattle, WA',
+    'Denver, CO',
+    'Los Angeles, CA',
+    'Atlanta, GA',
+    'Phoenix, AZ',
+    'Boston, MA',
+  ];
 
-const publishToKafka = async (data: StormReport[], topic: string): Promise<void> => {
-  await producer.connect();
-  // sending out to kafka one csv row at a time
-  for (const report of data) {
-    const message = JSON.stringify(report);
-    const messageSize = Buffer.byteLength(message, 'utf-8');
+  const getRandomInRange = (min: number, max: number): number =>
+    Math.random() * (max - min) + min;
 
-    if (messageSize > MAX_MESSAGE_BYTES) {
-      console.error(`Message size exceeds limit: ${messageSize} bytes`);
-      continue; // Skip oversized messages
+  const stormCount = Math.floor(getRandomInRange(5, 10));
+  const storms: StormReport[] = [];
+
+  for (let i = 0; i < stormCount; i++) {
+    const type = types[Math.floor(Math.random() * types.length)];
+    const location = locations[Math.floor(Math.random() * locations.length)];
+    const [city, state] = location.split(', ');
+
+    const lat = getRandomInRange(25, 49.5).toString();
+    const lon = getRandomInRange(-125, -67).toString();
+
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+
+    const storm: StormReport = {
+      lat,
+      lon,
+      location: city,
+      type,
+      time: '1200',
+      date: timestamp,
+      comments: 'Generated storm',
+      county: 'Some County',
+      state: state,
+    };
+
+    if (type === StormType.TORNADO) {
+      storm.fScale = fScales[Math.floor(Math.random() * fScales.length)];
+    } else if (type === StormType.HAIL) {
+      storm.size = parseFloat(getRandomInRange(0.5, 4).toFixed(1)).toString();
+    } else if (type === StormType.WIND) {
+      storm.speed = Math.floor(getRandomInRange(30, 100)).toString();
     }
 
-    await producer.send({
-      topic,
-      messages: [{ value: message }],
-    });
+    storms.push(storm);
   }
-  await producer.disconnect();
-}
+  console.log('Generated storms:', storms);
+  publishToKafka(storms, 'raw-weather-reports');
+};
 
-const baseURL = "https://www.spc.noaa.gov/climo/reports/"
-
+// Run producer
 export const runProducer = async () => {
-  console.log('runProducer function has been invoked.');
   const topic = 'raw-weather-reports';
-  const tornadoURL = baseURL + "today_torn.csv";
-  const hailURL = baseURL + "today_hail.csv";
-  const windURL = baseURL + "today_wind.csv";
+  const baseURL = 'https://www.spc.noaa.gov/climo/reports/';
+  const tornadoURL = baseURL + 'today_torn.csv';
+  const hailURL = baseURL + 'today_hail.csv';
+  const windURL = baseURL + 'today_wind.csv';
+
   try {
     console.log('Fetching storm reports...');
     const [tornados, hail, wind] = await Promise.all([
       fetchStormReports(tornadoURL),
       fetchStormReports(hailURL),
-      fetchStormReports(windURL)
+      fetchStormReports(windURL),
     ]);
     const allReports = [
-      ...tornados.map(report => ({ ...report, type: StormType.TORNADO })),
-      ...hail.map(report => ({ ...report, type: StormType.HAIL })),
-      ...wind.map(report => ({ ...report, type: StormType.WIND }))
+      ...tornados.map((report) => ({ ...report, type: StormType.TORNADO })),
+      ...hail.map((report) => ({ ...report, type: StormType.HAIL })),
+      ...wind.map((report) => ({ ...report, type: StormType.WIND })),
     ];
     console.log(`Fetched ${allReports.length} reports. Publishing to Kafka...`);
 
@@ -151,18 +236,18 @@ export const runProducer = async () => {
     console.log('Published storm reports to Kafka.');
   } catch (error) {
     console.error('Error in producer:', error);
+    await closeProducer();
   }
-}
-console.log('Producer service has started.');
-runProducer();
-// Only set the interval if not in a test environment
+};
+
+// Interval for daily producer run, skip if running tests
 if (process.env.NODE_ENV !== 'test') {
-  setInterval(runProducer, 24 * 60 * 60 * 1000); // Run once a day
+  setInterval(runProducer, 24 * 60 * 60 * 1000);
 }
 
+// CLI Arguments
 if (require.main === module) {
   const arg = process.argv[2];
-  console.log(process.argv)
   if (arg === 'runProducer') {
     runProducer();
   }

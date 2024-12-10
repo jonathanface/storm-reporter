@@ -116,7 +116,7 @@ const (
 type StormReport struct {
 	Date     string    `json:"date"`
 	Time     int32     `json:"time"`
-	Size     int32     `json:"size"`
+	Size     float64   `json:"size"`
 	F_Scale  string    `json:"fScale"`
 	Speed    int32     `json:"speed"`
 	Location string    `json:"location"`
@@ -134,7 +134,7 @@ func (sr *StormReport) UnmarshalJSON(data []byte) error {
 		Date     string `json:"date"`
 		Time     string `json:"Time"`
 		Size     string `json:"Size"`
-		F_Scale  string `json:"F_Scale"`
+		FScale   string `json:"fScale"`
 		Speed    string `json:"Speed"`
 		Location string `json:"Location"`
 		County   string `json:"County"`
@@ -156,8 +156,8 @@ func (sr *StormReport) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	if len(temp.Size) > 0 {
-		if val, err := strconv.Atoi(temp.Size); err == nil {
-			sr.Size = int32(val)
+		if val, err := strconv.ParseFloat(temp.Size, 64); err == nil {
+			sr.Size = float64(val)
 		} else {
 			return err
 		}
@@ -168,6 +168,9 @@ func (sr *StormReport) UnmarshalJSON(data []byte) error {
 		} else {
 			return err
 		}
+	}
+	if len(temp.FScale) > 0 {
+		sr.F_Scale = temp.FScale
 	}
 	if val, err := strconv.ParseFloat(temp.Lat, 64); err == nil {
 		sr.Lat = float64(val)
@@ -180,7 +183,6 @@ func (sr *StormReport) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	sr.Date = temp.Date
-	sr.F_Scale = temp.F_Scale
 	sr.Location = temp.Location
 	sr.County = temp.County
 	sr.State = temp.State

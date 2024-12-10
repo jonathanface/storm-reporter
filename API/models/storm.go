@@ -11,7 +11,7 @@ const (
 type StormReport struct {
 	Date     string    `json:"date" bson:"date"`
 	Time     int32     `json:"time" bson:"time"`
-	Size     int32     `json:"size" bson:"size"`
+	Size     float64   `json:"size" bson:"size"`
 	F_Scale  string    `json:"fScale" bson:"fScale"`
 	Speed    int32     `json:"speed" bson:"speed"`
 	Location string    `json:"location" bson:"location"`

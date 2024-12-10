@@ -1,4 +1,4 @@
-import { fetchStormReports } from '../index';
+import { closeProducer, fetchStormReports } from '../index';
 import axios from 'axios';
 import { Readable } from 'stream';
 
@@ -8,8 +8,9 @@ afterEach(() => {
   jest.clearAllMocks(); // Reset mocks to avoid unexpected interactions
 });
 
-afterAll(() => {
+afterAll(async () => {
   jest.restoreAllMocks(); // Ensure no lingering mocks remain
+  await closeProducer();
 });
 
 describe('fetchStormReports', () => {

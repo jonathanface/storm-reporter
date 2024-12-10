@@ -42,7 +42,8 @@ drop-db:
 	docker volume rm weather_mongo_data
 
 .PHONY: connect-db
-connect-db: docker exec -it mongo mongosh
+connect-db:
+	docker exec -it mongo mongosh
 
 .PHONY: stop-container
 stop-container:
