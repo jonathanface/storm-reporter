@@ -12,6 +12,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ./producer
+
     steps:
       # Step 1: Checkout the repository
       - name: Checkout code
@@ -25,12 +29,10 @@ jobs:
 
       # Step 3: Install dependencies
       - name: Install dependencies
-        working-directory: ./producer
         run: npm ci
 
       # Step 4: Run Jest tests
       - name: Run Jest tests
-        working-directory: ./producer
         run: npm test -- --ci --reporters=default --reporters=jest-junit
 
       # Step 5: Upload Jest JUnit report
