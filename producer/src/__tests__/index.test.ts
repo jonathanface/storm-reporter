@@ -4,6 +4,14 @@ import { Readable } from 'stream';
 
 jest.mock('axios');
 
+afterEach(() => {
+  jest.clearAllMocks(); // Reset mocks to avoid unexpected interactions
+});
+
+afterAll(() => {
+  jest.restoreAllMocks(); // Ensure no lingering mocks remain
+});
+
 describe('fetchStormReports', () => {
   it('should fetch and parse storm reports', async () => {
     const mockCsvData = `location,date,type\nDenver,2024-12-06,Tornado\nProvo,2024-12-06,Hail\n`;
@@ -13,17 +21,18 @@ describe('fetchStormReports', () => {
 
     (axios.get as jest.Mock).mockResolvedValue({ data: mockStream });
 
-    const reports = await fetchStormReports('https://mock-noaa-reports.com');
-    console.log("reps", reports)
-    expect(reports).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ location: 'Denver', type: 'Tornado' }),
-        expect.objectContaining({ location: 'Provo', type: 'Hail' }),
-      ]),
-    );
-
-    // Verify publishToKafka was called (optional)
-    // expect(publishToKafka).toHaveBeenCalledTimes(1);
+    try {
+      const reports = await fetchStormReports('https://mock-noaa-reports.com');
+      console.log("reps", reports)
+      expect(reports).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ location: 'Denver', type: 'Tornado' }),
+          expect.objectContaining({ location: 'Provo', type: 'Hail' }),
+        ]),
+      );
+    } finally {
+      mockStream.destroy(); // Ensure the stream is closed
+    }
   });
 
   it('should throw an error if fetching fails', async () => {
