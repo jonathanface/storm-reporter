@@ -155,7 +155,10 @@ export const runProducer = async () => {
 }
 console.log('Producer service has started.');
 runProducer();
-setInterval(runProducer, 24 * 60 * 60 * 1000);
+// Only set the interval if not in a test environment
+if (process.env.NODE_ENV !== 'test') {
+  setInterval(runProducer, 24 * 60 * 60 * 1000); // Run once a day
+}
 
 if (require.main === module) {
   const arg = process.argv[2];

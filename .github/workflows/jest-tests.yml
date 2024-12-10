@@ -16,6 +16,9 @@ jobs:
       run:
         working-directory: ./producer
 
+    env: # Set environment variables for the job
+      NODE_ENV: test
+
     steps:
       # Step 1: Checkout the repository
       - name: Checkout code
