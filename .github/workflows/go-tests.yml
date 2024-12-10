@@ -1,0 +1,43 @@
+name: Go Unit Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Change to ETL directory
+        working-directory: ./ETL
+        run: echo "Changed working directory to ETL"
+
+      # Set up Go environment
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21 # Replace with your Go version
+
+      # Install dependencies
+      - name: Install dependencies
+        run: go mod tidy
+
+      # Run tests
+      - name: Run tests
+        run: go test -v ./... -coverprofile=coverage.out ./...
+        
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.out
+
