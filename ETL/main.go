@@ -155,15 +155,19 @@ func (sr *StormReport) UnmarshalJSON(data []byte) error {
 	} else {
 		return err
 	}
-	if val, err := strconv.Atoi(temp.Size); err == nil {
-		sr.Size = int32(val)
-	} else {
-		return err
+	if len(temp.Size) > 0 {
+		if val, err := strconv.Atoi(temp.Size); err == nil {
+			sr.Size = int32(val)
+		} else {
+			return err
+		}
 	}
-	if val, err := strconv.Atoi(temp.Speed); err == nil {
-		sr.Speed = int32(val)
-	} else {
-		return err
+	if len(temp.Speed) > 0 {
+		if val, err := strconv.Atoi(temp.Speed); err == nil {
+			sr.Speed = int32(val)
+		} else {
+			return err
+		}
 	}
 	if val, err := strconv.ParseFloat(temp.Lat, 64); err == nil {
 		sr.Lat = float64(val)

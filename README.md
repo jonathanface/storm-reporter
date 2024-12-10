@@ -48,7 +48,7 @@ Exposes endpoints to query storm data stored in MongoDB. It also consumes Kafka 
 ### 3. Frontend
 A React-based web application that displays storm data on a Google Map with filtering capabilities.
 
-## Setup and Installation
+## Setup and Installation (linux)
 
 ### Prerequisites
 - [Docker](https://www.docker.com/)
@@ -73,6 +73,11 @@ A React-based web application that displays storm data on a Google Map with filt
    - API: [http://localhost:8080](http://localhost:8080)
 
 ## Usage
+### Commands
+Numerous makefile commands are available to manage the services.
+```bash
+sudo make help
+
 ### Frontend
 
 - **View Storm Data**: Navigate to the frontend service and select a date to view storm reports for that day.

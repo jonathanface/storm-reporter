@@ -44,6 +44,26 @@ drop-db:
 .PHONY: connect-db
 connect-db: docker exec -it mongo mongosh
 
+.PHONY: stop-container
+stop-container:
+	@if [ -z "$(name)" ]; then \
+		echo "Error: Please specify the container name using 'make stop-container name=<container_name>'"; \
+		exit 1; \
+	fi
+	@docker stop $(name) && echo "Container '$(name)' stopped successfully." || echo "Failed to stop container '$(name)'."
+
+.PHONY: start-container
+start-container:
+	@if [ -z "$(name)" ]; then \
+		echo "Error: Please specify the container name using 'make start-container name=<container_name>'"; \
+		exit 1; \
+	fi
+	@docker start $(name) && echo "Container '$(name)' started successfully." || echo "Failed to start container '$(name)'."
+
+.PHONY: container-status
+container-status:
+	@docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "Failed to retrieve container status."
+
 
 # View logs of a specific service
 .PHONY: logs
@@ -84,10 +104,14 @@ kafka-consume:
 .PHONY: help
 help:
 	@echo "Available commands:"
+	@echo "  make start-container name=<container_name>   - Start a specific container"
+	@echo "  make stop-container name=<container_name>   - Stop a specific container"
+	@echo "  make container-status   - View service status"
 	@echo "  make compose-build   - Build Docker Compose services"
 	@echo "  make compose-up      - Start all services in Docker Compose"
 	@echo "  make compose-down    - Stop all services in Docker Compose"
 	@echo "  make compose-restart - Restart all services in Docker Compose"
+	@echo "  make compose-replace - Stop all services, rebuild, and start all services in Docker Compose"
 	@echo "  make logs            - View logs of a specific service"
 	@echo "  make kafka-list      - List Kafka topics"
 	@echo "  make kafka-create    - Create a Kafka topic"

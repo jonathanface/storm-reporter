@@ -6,6 +6,13 @@ import TextField from "@mui/material/TextField";
 import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
 
+export enum StormType {
+  TORNADO = 'tornado',
+  HAIL = 'hail',
+  WIND = 'wind',
+}
+
+
 interface StormData {
   lat: number;
   lon: number;
@@ -16,25 +23,27 @@ interface StormData {
   type: string;
   time: string;
   date: string;
+  comments: string;
 }
 
 const generateInfoWindow = (storm: StormData): string => {
   let additionalDetail = "";
 
   if (storm.type === "hail") {
-    additionalDetail = `<strong>Size:</strong> ${storm.size}`;
+    additionalDetail = `<strong>Size:</strong> ${storm.size || "UNK"}`;
   } else if (storm.type === "tornado") {
-    additionalDetail = `<strong>F-Scale:</strong> ${storm.fScale}`;
+    additionalDetail = `<strong>F-Scale:</strong> ${storm.fScale || "UNK"}`;
   } else if (storm.type === "wind") {
-    additionalDetail = `<strong>Speed:</strong> ${storm.speed}`;
+    additionalDetail = `<strong>Speed:</strong> ${storm.speed || "UNK"}`;
   }
 
   return `
     <div>
+    <strong>Time:</strong> ${storm.time || "N/A"}<br />
       <strong>Location:</strong> ${storm.location}<br />
       <strong>Type:</strong> ${storm.type}<br />
-      ${additionalDetail ? additionalDetail + "<br />" : ""}
-      <strong>Time:</strong> ${storm.time || "N/A"}
+      ${additionalDetail ? additionalDetail + "<br />" : "<br />"}
+      <strong>Notes:</strong> ${storm.comments || "N/A"}
     </div>
   `;
 };
@@ -44,6 +53,12 @@ const App: React.FC = () => {
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [loading, setLoading] = useState(false);
+  const typeColors = {
+    tornado: "#FF0000",
+    hail: "#0000FF",
+    wind: "#00FF00",
+  };
+
 
   const fetchAndRenderStormData = async (date: Date | null) => {
     if (!mapRef.current || !date) return;
@@ -82,8 +97,19 @@ const App: React.FC = () => {
         bounds.extend(new google.maps.LatLng(latitude, longitude));
 
         if (!isNaN(latitude) && !isNaN(longitude)) {
-          const marker = new google.maps.Marker({
-            position: { lat: latitude, lng: longitude },
+          // const marker = new google.maps.Marker({
+          //   position: { lat: latitude, lng: longitude },
+          //   map: map,
+          // });
+          const circleColor: string = typeColors[storm.type as StormType] || "#CCCCCC";
+          const marker = new google.maps.Circle({
+            center: { lat: latitude, lng: longitude },
+            radius: 25000,
+            strokeColor: "#000000",
+            strokeOpacity: 1,
+            strokeWeight: 1,
+            fillColor: circleColor,
+            fillOpacity: 0.55,
             map: map,
           });
 
@@ -92,7 +118,8 @@ const App: React.FC = () => {
           });
 
           marker.addListener("click", () => {
-            infoWindow.open(map, marker);
+            infoWindow.setPosition({ lat: latitude, lng: longitude });
+            infoWindow.open(map);
           });
         }
       });
