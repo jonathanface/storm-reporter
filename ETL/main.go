@@ -152,18 +152,28 @@ func (sr *StormReport) UnmarshalJSON(data []byte) error {
 
 	if val, err := strconv.Atoi(temp.Time); err == nil {
 		sr.Time = int32(val)
+	} else {
+		return err
 	}
 	if val, err := strconv.Atoi(temp.Size); err == nil {
 		sr.Size = int32(val)
+	} else {
+		return err
 	}
 	if val, err := strconv.Atoi(temp.Speed); err == nil {
 		sr.Speed = int32(val)
+	} else {
+		return err
 	}
 	if val, err := strconv.ParseFloat(temp.Lat, 64); err == nil {
 		sr.Lat = float64(val)
+	} else {
+		return err
 	}
 	if val, err := strconv.ParseFloat(temp.Lon, 64); err == nil {
 		sr.Lon = float64(val)
+	} else {
+		return err
 	}
 	sr.Date = temp.Date
 	sr.F_Scale = temp.F_Scale
@@ -176,6 +186,7 @@ func (sr *StormReport) UnmarshalJSON(data []byte) error {
 }
 
 func transformData(data string) (string, error) {
+
 	var raw map[string]interface{}
 	err := json.Unmarshal([]byte(data), &raw)
 	if err != nil {
