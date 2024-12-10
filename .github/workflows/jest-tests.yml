@@ -22,19 +22,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-    
-      # Change to the producer directory
-      - name: Change directory to producer
-        working-directory: ./producer
-        run: |
-          echo "Changed working directory to producer"
 
       # Step 3: Install dependencies
       - name: Install dependencies
+        working-directory: ./producer
         run: npm ci
 
       # Step 4: Run Jest tests
       - name: Run Jest tests
+        working-directory: ./producer
         run: npm test -- --ci --reporters=default --reporters=jest-junit
 
       # Step 5: Upload Jest JUnit report
@@ -42,11 +38,11 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jest-junit-report
-          path: ./junit.xml
+          path: ./producer/junit.xml
 
       # Step 6: Upload coverage report
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         with:
           name: coverage-report
-          path: ./coverage
+          path: ./producer/coverage
