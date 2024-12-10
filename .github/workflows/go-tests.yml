@@ -37,11 +37,33 @@ jobs:
       # Run tests in ETL directory
       - name: Run tests
         working-directory: ./ETL
-        run: go test -coverprofile=coverage.out -json > test-report.json ./...
+        run: go test -coverprofile=coverage-etl.out -json > test-report-etl.json ./...
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: ./ETL/coverage.out
+          path: ./ETL/coverage-etl.out
+
+    # Change to the API directory
+      - name: Change directory to API
+        working-directory: ./API
+        run: |
+          echo "Changed working directory to API"
+
+      # Install dependencies
+      - name: Install dependencies
+        working-directory: ./API
+        run: go mod tidy
+
+      # Run tests in ETL directory
+      - name: Run tests
+        working-directory: ./API
+        run: go test -coverprofile=coverage-api.out -json > test-report-api.json ./...
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./ETL/coverage-api.out
       

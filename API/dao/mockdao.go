@@ -3,14 +3,13 @@ package dao
 import "github.com/jonathanface/storm-reporter/API/models"
 
 type MockStormDAO struct {
-	StormReports []models.StormReport
+	MockGetStormReports func(start string, end string) ([]models.StormReport, error)
 }
 
-func (m *MockStormDAO) GetStormReports(start, end string) ([]models.StormReport, error) {
-	return m.StormReports, nil
+func (m *MockStormDAO) GetStormReports(start string, end string) ([]models.StormReport, error) {
+	return m.MockGetStormReports(start, end)
 }
 
-func (m *MockStormDAO) InsertStormReport(report models.StormReport) error {
-	m.StormReports = append(m.StormReports, report)
+func (m *MockStormDAO) Disconnect() error {
 	return nil
 }

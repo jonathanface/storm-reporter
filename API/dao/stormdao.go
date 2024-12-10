@@ -25,8 +25,8 @@ func NewStormDAO(uri, dbName, collName string) (*StormDAO, error) {
 	return &StormDAO{client: client, collection: collection}, nil
 }
 
-func (dao *StormDAO) Disconnect() error {
-	return dao.client.Disconnect(context.TODO())
+func (d *StormDAO) Disconnect() error {
+	return d.client.Disconnect(context.TODO())
 }
 
 func (dao *StormDAO) GetStormReports(startOfDay, endOfDay string) ([]models.StormReport, error) {
