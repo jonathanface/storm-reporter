@@ -34,6 +34,9 @@ The application uses Docker containers to manage services:
 2. The API consumes Kafka messages and stores them in MongoDB.
 3. Frontend fetches data from the API to display on a map.
 
+### Diagram
+![Architecture Diagram](./architecture.png)
+
 ## Services
 
 ### 1. Producer
@@ -103,9 +106,6 @@ Fetch storm reports for a given date.
   - `404`: No data found.
   - `400`: Invalid date parameter.
   - `500`: Internal server error.
-
-## Architecture
-![Architecture Diagram](./architecture.png)
 
 ## License
 
