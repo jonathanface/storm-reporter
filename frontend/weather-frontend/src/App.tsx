@@ -123,7 +123,16 @@ const App: React.FC = () => {
           });
         }
       });
+      console.log("wtf")
+      if (storms.length === 1) {
+        const [storm] = storms;
+        const lat = storm.lat;
+        const lon = storm.lon;
 
+        // Extend bounds slightly to ensure the map doesn't zoom in too much
+        bounds.extend(new google.maps.LatLng(lat + 0.1, lon + 0.1)); // Northeast
+        bounds.extend(new google.maps.LatLng(lat - 0.1, lon - 0.1)); // Southwest
+      }
       map.fitBounds(bounds);
     } catch (error: unknown) {
       console.error("Error fetching or processing storm data:", error);
