@@ -28,7 +28,6 @@ interface StormData {
 
 const generateInfoWindow = (storm: StormData): string => {
   let additionalDetail = "";
-
   if (storm.type === "hail") {
     additionalDetail = `<strong>Size:</strong> ${storm.size || "UNK"}`;
   } else if (storm.type === "tornado") {
@@ -39,9 +38,9 @@ const generateInfoWindow = (storm: StormData): string => {
 
   return `
     <div>
+    <strong>${storm.type.toUpperCase()}</strong><br /><br />
     <strong>Time:</strong> ${storm.time || "N/A"}<br />
       <strong>Location:</strong> ${storm.location}<br />
-      <strong>Type:</strong> ${storm.type}<br />
       ${additionalDetail ? additionalDetail + "<br />" : "<br />"}
       <strong>Notes:</strong> ${storm.comments || "N/A"}
     </div>
@@ -123,7 +122,6 @@ const App: React.FC = () => {
           });
         }
       });
-      console.log("wtf")
       if (storms.length === 1) {
         const [storm] = storms;
         const lat = storm.lat;

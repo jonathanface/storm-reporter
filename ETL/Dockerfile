@@ -16,12 +16,6 @@ COPY . .
 # Build the Go application
 RUN go build -o etl-service .
 
-FROM golang:1.20
-WORKDIR /app
-
-# Copy the compiled binary from the builder
-COPY --from=builder /app/etl-service .
-
 # Expose port for debugging/logging (optional)
 EXPOSE 3000
 
