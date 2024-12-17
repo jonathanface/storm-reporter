@@ -45,6 +45,9 @@ drop-db:
 connect-db:
 	docker exec -it mongo mongosh
 
+delete-generated-storms:
+	@docker exec -it mongo mongosh --eval 'db.getSiblingDB("kafka_messages").messages.deleteMany({county:"Some County"}); print("Deleted all generated storms.");'
+
 .PHONY: stop-container
 stop-container:
 	@if [ -z "$(name)" ]; then \

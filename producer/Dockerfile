@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:18
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -18,4 +18,3 @@ EXPOSE 3000
 
 # Start the application
 CMD ["node", "dist/index.js"]
-
